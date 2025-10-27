@@ -12,9 +12,9 @@ namespace CoreBankingTest.Infrastructure
     {
         private readonly List<AccountModel> _accounts = new()
         {
-           new AccountModel { Id = 1, Name = "Alice", Balance = 1000m },
-            new AccountModel { Id = 2, Name = "Bob", Balance = 1500m },
-            new AccountModel { Id = 3, Name = "Charlie", Balance = 2000m }
+           new AccountModel { Id = 1, Name = "Alice", Balance = 1000m , Currency = "usd" },
+            new AccountModel { Id = 2, Name = "Bob", Balance = 1500m, Currency = "usd" },
+            new AccountModel { Id = 3, Name = "Charlie", Balance = 2000m, Currency = "ngn" }
         };
 
         public IEnumerable<AccountModel> GetAll() => _accounts;

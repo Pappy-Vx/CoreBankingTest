@@ -26,7 +26,7 @@ namespace CoreBankingTest.API.Controllers
             var account = _accountRepository.GetById(id);
             if (account == null)
             {
-                return NotFound($"Acocunt with ID {id} not found");
+                return NotFound($"Account with ID {id} not found");
             }
             return Ok(account);
         }
