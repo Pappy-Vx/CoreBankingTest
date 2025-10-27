@@ -1,4 +1,5 @@
-﻿using CoreBankingTest.Core.Interfaces;
+﻿using CoreBankingTest.Core.Enums;
+using CoreBankingTest.Core.Interfaces;
 using CoreBankingTest.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -12,9 +13,9 @@ namespace CoreBankingTest.Infrastructure
     {
         private readonly List<AccountModel> _accounts = new()
         {
-           new AccountModel { Id = 1, Name = "Alice", Balance = 1000m , Currency = "usd" },
-            new AccountModel { Id = 2, Name = "Bob", Balance = 1500m, Currency = "usd" },
-            new AccountModel { Id = 3, Name = "Charlie", Balance = 2000m, Currency = "ngn" }
+           new AccountModel { Id = 1, Name = "Alice", Balance = 1000m , Currency = CurrencyType.USD },
+            new AccountModel { Id = 2, Name = "Bob", Balance = 1500m, Currency = CurrencyType.NGN },
+            new AccountModel { Id = 3, Name = "Charlie", Balance = 2000m, Currency = CurrencyType.EUR}
         };
 
         public IEnumerable<AccountModel> GetAll() => _accounts;
