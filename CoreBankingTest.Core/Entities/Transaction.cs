@@ -10,8 +10,10 @@ namespace CoreBankingTest.Core.Entities
 {
     public class Transaction
     {
-        public Guid TransactionId { get; private set; }
-        public Guid AccountId { get; private set; }
+        public TransactionId TransactionId { get; private set; }
+
+        public AccountId AccountId { get; private set; }
+        public Account Account { get; private set; } // Navigation Key
         public TransactionType Type { get; private set; }
         public Money Amount { get; private set; }
 
@@ -23,9 +25,9 @@ namespace CoreBankingTest.Core.Entities
         //Required for EF Core
         private Transaction() { }
 
-        public Transaction(Guid accountId, Money amount, TransactionType type, string description)
+        public Transaction(AccountId accountId, Money amount, TransactionType type, string description)
         {
-            TransactionId = Guid.NewGuid();
+            TransactionId = TransactionId.Create();
             AccountId = accountId;
             Amount = amount;
             Type = type;

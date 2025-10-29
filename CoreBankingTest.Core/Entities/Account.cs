@@ -1,4 +1,5 @@
 ﻿using CoreBankingTest.Core.Enums;
+using CoreBankingTest.Core.Interfaces;
 using CoreBankingTest.Core.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -9,15 +10,34 @@ using System.Threading.Tasks;
 
 namespace CoreBankingTest.Core.Entities
 {
-    public class Account
+    public class Account: ISoftDelete
     {
-        public Guid AccountId { get; private set; }
+        public AccountId AccountId { get; private set; }
+        public Customer Customer { get; private set; } // Navigation Key
         public AccountNumber AccountNumber { get; private set; }
         public AccountType AccountType { get; private set; }
         public Money Balance { get; private set; }
         public DateTime DateOpened { get; private set; }
-        public Guid CustomerId { get; private set; }
+        public CustomerId CustomerId { get; private set; }
         public bool IsActive { get; private set; }
+
+        // the Account entity implements the interface and creates its on business logic for soft deletions
+        public bool IsDeleted { get; private set; }
+        public DateTime? DeletedAt { get; private set; }
+        public string? DeletedBy { get; private set; }
+
+        public void SoftDelete(string deletedBy)
+        {
+            if (Balance.Amount != 0)
+                throw new InvalidOperationException("Cannot close account with non-zero balance");
+
+            IsDeleted = true;
+            DeletedAt = DateTime.UtcNow;
+            DeletedBy = deletedBy;
+        }
+
+        public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
+
         //Navigation Property
         private readonly List<Transaction> _transactions = new();
         public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
@@ -28,7 +48,7 @@ namespace CoreBankingTest.Core.Entities
         public Account(AccountNumber accountNumber, Guid customerId, AccountType accountType)
 
         {
-            AccountId = Guid.NewGuid();
+            AccountId = AccountId.Create();
             AccountNumber = accountNumber;
             AccountType = accountType;
             Balance = new Money(0, CurrencyType.NGN);
