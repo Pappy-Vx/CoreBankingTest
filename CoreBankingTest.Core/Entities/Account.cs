@@ -1,92 +1,92 @@
 ﻿using CoreBankingTest.Core.Enums;
 using CoreBankingTest.Core.Interfaces;
 using CoreBankingTest.Core.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace CoreBankingTest.Core.Entities
 {
-    public class Account: ISoftDelete
+    public class Account : ISoftDelete
     {
         public AccountId AccountId { get; private set; }
-        public Customer Customer { get; private set; } // Navigation Key
         public AccountNumber AccountNumber { get; private set; }
         public AccountType AccountType { get; private set; }
         public Money Balance { get; private set; }
-        public DateTime DateOpened { get; private set; }
         public CustomerId CustomerId { get; private set; }
+        public Customer Customer { get; private set; }
+        public DateTime DateOpened { get; private set; }
+        public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
         public bool IsActive { get; private set; }
-
-        // the Account entity implements the interface and creates its on business logic for soft deletions
         public bool IsDeleted { get; private set; }
         public DateTime? DeletedAt { get; private set; }
         public string? DeletedBy { get; private set; }
 
-        public void SoftDelete(string deletedBy)
-        {
-            if (Balance.Amount != 0)
-                throw new InvalidOperationException("Cannot close account with non-zero balance");
 
-            IsDeleted = true;
-            DeletedAt = DateTime.UtcNow;
-            DeletedBy = deletedBy;
-        }
-
-        public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
-
-        //Navigation Property
+        // Navigation properties - private to enforce aggregate boundary
         private readonly List<Transaction> _transactions = new();
         public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
-        //Required for EF Core
-        private Account() { }
+        private Account() { } // EF Core needs this
 
-        public Account(AccountNumber accountNumber, Guid customerId, AccountType accountType)
-
+        public Account(AccountNumber accountNumber, AccountType accountType, CustomerId customerId, Customer customer)
         {
             AccountId = AccountId.Create();
             AccountNumber = accountNumber;
             AccountType = accountType;
-            Balance = new Money(0, CurrencyType.NGN);
+            CustomerId = customerId;
+            Customer = customer;
+            Balance = new Money(0);
             DateOpened = DateTime.UtcNow;
             IsActive = true;
         }
 
-        public Transaction Deposit(Money amount, string description = "Deposit")
+        // Core banking operations - these are the aggregate's public API
+        public Transaction Deposit(Money amount, Account account, string description = "Deposit")
         {
             if (!IsActive)
-                throw new InvalidOperationException("Cannot deposit to an inactive account.");
+                throw new InvalidOperationException("Cannot deposit to inactive account");
+
             if (amount.Amount <= 0)
-                throw new ArgumentOutOfRangeException("Deposit amount must be positive.");
+                throw new ArgumentException("Deposit amount must be positive");
 
             Balance += amount;
 
-            var transaction = new Transaction(accountId: AccountId, amount: amount, type: TransactionType.Deposit, description: description);
+            var transaction = new Transaction(
+                accountId: AccountId,
+                account: account,
+                type: TransactionType.Deposit,
+                amount: amount,
+                description: description
+            );
 
             _transactions.Add(transaction);
             return transaction;
         }
 
-        //Core Banking Operations - this are aggregrates for public API
-        public Transaction Withdrawal (Money amount, string description = "Withdrawal")
+        public Transaction Withdraw(Money amount, Account account, string description = "Withdrawal")
         {
             if (!IsActive)
-                throw new InvalidOperationException("Cannot withdraw from an inactive account.");
-            if (amount.Amount <= 0)
-                throw new ArgumentOutOfRangeException("Withdrawal amount must be positive.");
-            if (Balance.Amount < amount.Amount)
-                throw new InvalidOperationException("Insufficient funds for withdrawal.");
+                throw new InvalidOperationException("Cannot withdraw from inactive account");
 
-            //special business rule for savings accounts
+            if (amount.Amount <= 0)
+                throw new ArgumentException("Withdrawal amount must be positive");
+
+            if (Balance.Amount < amount.Amount)
+                throw new InvalidOperationException("Insufficient funds");
+
+            // Special business rule for Savings accounts
             if (AccountType == AccountType.Savings && _transactions.Count(t => t.Type == TransactionType.Withdrawal) >= 6)
-                throw new InvalidOperationException("Savings account withdrawal limit reached.");
+                throw new InvalidOperationException("Savings account withdrawal limit reached");
 
             Balance -= amount;
-            var transaction = new Transaction(accountId: AccountId, amount: amount, type: TransactionType.Withdrawal, description: description);
+
+            var transaction = new Transaction(
+                accountId: AccountId,
+                account: account,
+                type: TransactionType.Withdrawal,
+                amount: amount,
+                description: description
+            );
+
             _transactions.Add(transaction);
             return transaction;
         }
@@ -94,8 +94,17 @@ namespace CoreBankingTest.Core.Entities
         public void CloseAccount()
         {
             if (Balance.Amount != 0)
-                throw new InvalidOperationException("Cannot close account with remaining balance.");
+                throw new InvalidOperationException("Cannot close account with non-zero balance");
+
             IsActive = false;
+        }
+
+        public void UpdateBalance(Money newBalance)
+        {
+            if (!IsActive)
+                throw new InvalidOperationException("Cannot update balance for inactive account.");
+
+            Balance = newBalance;
         }
     }
 }

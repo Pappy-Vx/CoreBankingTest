@@ -12,7 +12,7 @@ namespace CoreBankingTest.Core.ValueObjects
         public decimal Amount { get; }
         public CurrencyType Currency { get; } = CurrencyType.NGN;
 
-        public Money(decimal amount, CurrencyType currency)
+        public Money(decimal amount, CurrencyType currency = CurrencyType.NGN)
         {
             if (Amount < 0)
                 throw new ArgumentOutOfRangeException("Money amount cannot be negative.");

@@ -15,7 +15,6 @@ namespace CoreBankingTest.Infrastructure.Repository
     public class TransactionRepository : ITransactionRepository
     {
 
-
         private readonly BankingDbContext _context;
 
         public TransactionRepository(BankingDbContext context)
@@ -47,17 +46,15 @@ namespace CoreBankingTest.Infrastructure.Repository
                 .ToListAsync(cancellationToken);
         }
 
-   
+        public async Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default)
+        {
+            await _context.Transactions.AddAsync(transaction, cancellationToken);
+        }
 
         public async Task UpdateAsync(Transaction transaction, CancellationToken cancellationToken = default)
         {
             _context.Transactions.Update(transaction);
             await Task.CompletedTask;
-        }
-
-        public async Task AddSync(Transaction transaction, CancellationToken cancellationToken = default)
-        {
-            await _context.Transactions.AddAsync(transaction, cancellationToken);
         }
     }
 }

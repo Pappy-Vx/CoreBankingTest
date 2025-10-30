@@ -20,7 +20,7 @@ namespace CoreBankingTest.Infrastructure.Repository
             _context = context;
         }
 
-        public async Task<Customer> GetByIdAsync(CustomerId customerId)
+        public async Task<Customer?> GetByIdAsync(CustomerId customerId)
         {
             return await _context.Customers
                 .Include(c => c.Accounts)
@@ -41,12 +41,14 @@ namespace CoreBankingTest.Infrastructure.Repository
 
         public async Task UpdateAsync(Customer customer)
         {
+            _context.Customers.Update(customer);
             await Task.CompletedTask;
         }
 
         public async Task<bool> ExistsAsync(CustomerId customerId)
         {
-            return await _context.Customers.AnyAsync(c => c.CustomerId == customerId);
+            return await _context.Customers
+                .AnyAsync(c => c.CustomerId == customerId);
         }
 
         public async Task SaveChangesAsync()

@@ -1,25 +1,16 @@
 ﻿using CoreBankingTest.Core.Entities;
-using CoreBankingTest.Core.Models;
 using CoreBankingTest.Core.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CoreBankingTest.Core.Interfaces
 {
     public interface IAccountRepository
     {
-        AccountModel GetById(int Id);
+        Task<Account?> GetByIdAsync(AccountId accountId);
         Task<List<Account>> GetAllAsync();
-        void Add(AccountModel account);
-
-        Task<Account> GetByIdAsync(AccountId accountId);
-        Task<Account> GetByAccountNumberAsync(AccountNumber accountNumber);
-        Task<IEnumerable<Account>> GetByCustomerIdAsync(Guid customerId);
+        Task<Account?> GetByAccountNumberAsync(AccountNumber accountNumber);
+        Task<IEnumerable<Account>> GetByCustomerIdAsync(CustomerId customerId);
         Task AddAsync(Account account);
         Task UpdateAsync(Account account);
-        Task <bool> AccountNumberExistsAsync(AccountNumber accountNumber);
+        Task<bool> AccountNumberExistsAsync(AccountNumber accountNumber);
     }
 }
