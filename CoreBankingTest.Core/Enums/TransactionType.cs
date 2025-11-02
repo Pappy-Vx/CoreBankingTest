@@ -4,8 +4,9 @@
     {
         Deposit = 1,
         Withdrawal = 2,
-        Transfer = 3,
-        Interest = 4
+        TransferIn = 3,
+        TransferOut= 4,
+        Interest = 5
 
     }
 }

@@ -21,7 +21,7 @@ namespace CoreBankingTest.Core.Entities
 
         private Transaction() { } // for materializing EF Core
 
-        public Transaction(AccountId accountId, TransactionType type, Money amount, string description, Account account)
+        public Transaction(AccountId accountId, TransactionType type, Money amount, string description, Account account, string reference = "")
         {
             TransactionId = TransactionId.Create();
             AccountId = accountId;
@@ -30,7 +30,7 @@ namespace CoreBankingTest.Core.Entities
             Amount = amount;
             Description = description ?? throw new ArgumentNullException(nameof(description));
             Timestamp = DateTime.UtcNow;
-            Reference = GenerateReference();
+            Reference = string.IsNullOrEmpty(reference)? GenerateReference() : reference;
         }
 
         private string GenerateReference()
