@@ -1,20 +1,17 @@
-ï»¿using CoreBankingTest.Application.Accounts.Commands.CreateAccount;
-using CoreBankingTest.Application.Common.Behaviors;
-using CoreBankingTest.Application.Common.Mappings;
-using CoreBankingTest.Core.Interfaces;
-using CoreBankingTest.Infrastructure.Data;
-using CoreBankingTest.Infrastructure.Repository;
+using CoreBanking.API.Middleware;
+using CoreBanking.Application.Accounts.Commands.CreateAccount;
+using CoreBanking.Application.Common.Behaviors;
+using CoreBanking.Application.Common.Mappings;
+using CoreBanking.Core.Interfaces;
+using CoreBanking.Infrastructure.Data;
+using CoreBanking.Infrastructure.Repositories;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using CoreBankingTest.API.Middleware;
 using System.Reflection;
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 
-
-namespace CoreBankingTest.API
+namespace CoreBanking.API
 {
     public class Program
     {
@@ -41,7 +38,7 @@ namespace CoreBankingTest.API
             // Add MediatR with behaviours
             builder.Services.AddMediatR(cfg =>
             {
-                // Note: Registering one command is enough per Layerï¿½MediatR scans the entire Application assembly (all Commands & Queries).
+                // Note: Registering one command is enough per Layer—MediatR scans the entire Application assembly (all Commands & Queries).
                 cfg.RegisterServicesFromAssembly(typeof(CreateAccountCommand).Assembly);
 
                 cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
@@ -90,7 +87,7 @@ namespace CoreBankingTest.API
 
             var app = builder.Build();
 
-
+            
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -107,7 +104,7 @@ namespace CoreBankingTest.API
                 });
             }
 
-            app.UseHttpsRedirection();
+            app.UseHttpsRedirection();           
 
             app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 

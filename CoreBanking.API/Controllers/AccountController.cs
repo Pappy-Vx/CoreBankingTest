@@ -1,15 +1,15 @@
 ﻿using AutoMapper;
-using CoreBankingTest.API.Models;
-using CoreBankingTest.API.Models.Requests;
-using CoreBankingTest.Application.Accounts.Commands.CreateAccount;
-using CoreBankingTest.Application.Accounts.Commands.TransferMoney;
-using CoreBankingTest.Application.Accounts.Queries.GetAccountDetails;
-using CoreBankingTest.Application.Accounts.Queries.GetTransactionHistory;
-using CoreBankingTest.Core.ValueObjects;
+using CoreBanking.API.Models;
+using CoreBanking.API.Models.Requests;
+using CoreBanking.Application.Accounts.Commands.CreateAccount;
+using CoreBanking.Application.Accounts.Commands.TransferMoney;
+using CoreBanking.Application.Accounts.Queries.GetAccountDetails;
+using CoreBanking.Application.Accounts.Queries.GetTransactionHistory;
+using CoreBanking.Core.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CoreBankingTest.API.Controllers;
+namespace CoreBanking.API.Controllers;
 
 /// <summary>
 /// Banking accounts management API
