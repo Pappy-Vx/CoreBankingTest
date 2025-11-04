@@ -1,0 +1,127 @@
+﻿namespace CoreBanking.API.gRPC.Protos
+{
+   syntax = "proto3";
+
+    package corebanking;
+
+    import "google/protobuf/timestamp.proto";
+
+    option csharp_namespace = "CoreBanking.API.gRPC";
+
+    // Account service definition
+    service AccountService {
+    rpc GetAccount (GetAccountRequest) returns (AccountResponse);
+    rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse);
+    rpc TransferMoney (TransferMoneyRequest) returns (TransferMoneyResponse);
+    rpc GetTransactionHistory (TransactionHistoryRequest) returns (stream TransactionResponse);
+    }
+
+    // Message definitions
+    message GetAccountRequest {
+    string account_number = 1;
+    }
+
+    message AccountResponse {
+    string account_id = 1;
+    string account_number = 2;
+    string account_type = 3;
+    double balance = 4;
+    string currency = 5;
+    string customer_name = 6;
+    google.protobuf.Timestamp date_opened = 7;
+    bool is_active = 8;
+    }
+
+    message CreateAccountRequest {
+    string customer_id = 1;
+    string account_type = 2;
+    double initial_deposit = 3;
+    string currency = 4;
+    }
+
+    message CreateAccountResponse {
+    string account_id = 1;
+    string account_number = 2;
+    string message = 3;
+    }
+
+    message TransferMoneyRequest {
+    string source_account_number = 1;
+    string destination_account_number = 2;
+    double amount = 3;
+    string currency = 4;
+    string reference = 5;
+    string description = 6;
+    }
+
+    message TransferMoneyResponse {
+    bool success = 1;
+    string message = 2;
+    string transaction_id = 3;
+    google.protobuf.Timestamp transfer_date = 4;
+    }
+
+    message TransactionHistoryRequest {
+    string account_number = 1;
+    google.protobuf.Timestamp start_date = 2;
+    google.protobuf.Timestamp end_date = 3;
+    int32 page_size = 4;
+    }
+
+    message TransactionResponse {
+    string transaction_id = 1;
+    string type = 2;
+    double amount = 3;
+    string currency = 4;
+    string description = 5;
+    string reference = 6;
+    google.protobuf.Timestamp transaction_date = 7;
+    string status = 8;
+    }
+Advanced Protobuf Features for Banking:
+
+    // CoreBanking.Core/gRPC/Protos/common.proto
+    syntax = "proto3";
+
+    package corebanking;
+
+    message Money {
+    double amount = 1;
+    string currency = 2;
+    }
+
+    message Address {
+    string line1 = 1;
+    string line2 = 2;
+    string city = 3;
+    string state = 4;
+    string postal_code = 5;
+    string country = 6;
+    }
+
+    message ErrorDetail {
+    string code = 1;
+    string message = 2;
+    string target = 3;
+    repeated ErrorDetail details = 4;
+    }
+
+    message ApiResponse {
+    bool success = 1;
+    string message = 2;
+    repeated ErrorDetail errors = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    }
+
+    // Enhanced account service with streaming
+    service EnhancedAccountService {
+    // Server streaming for real-time transactions
+    rpc StreamTransactions (StreamTransactionsRequest) returns (stream TransactionResponse);
+    
+    // Client streaming for batch operations
+    rpc BatchTransfer (stream TransferMoneyRequest) returns (BatchTransferResponse);
+    
+    // Bidirectional streaming for real-time trading
+    rpc LiveTrading (stream TradingOrder) returns (stream TradingExecution);
+    }
+}
