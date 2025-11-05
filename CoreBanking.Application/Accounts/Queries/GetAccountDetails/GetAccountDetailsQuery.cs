@@ -7,3 +7,4 @@ public record GetAccountDetailsQuery : IQuery<AccountDetailsDto>
 {
     public required AccountNumber AccountNumber { get; init; }
 }
+

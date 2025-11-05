@@ -2,6 +2,7 @@
 using CoreBanking.Core.Common;
 using CoreBanking.Core.Entities;
 using CoreBanking.Core.Enums;
+using CoreBanking.Core.Events;
 using CoreBanking.Core.ValueObjects;
 using CoreBanking.Infrastructure.Persistence.Configurations;
 using CoreBanking.Infrastructure.Persistence.Outbox;
@@ -20,10 +21,19 @@ namespace CoreBanking.Infrastructure.Data
         public DbSet<Transaction> Transactions => Set<Transaction>();
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
+        public DbSet<DomainEvent> DomainEvents => Set<DomainEvent>();  
+
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
+
+            modelBuilder.Ignore<DomainEvent>();
+            modelBuilder.Ignore<IDomainEvent>();
+
 
             // Customer configuration
             modelBuilder.Entity<Customer>(entity =>

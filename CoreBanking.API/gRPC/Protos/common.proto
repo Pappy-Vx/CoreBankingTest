@@ -1,0 +1,94 @@
+﻿syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package corebanking;
+
+message Money {
+  double amount = 1;
+  string currency = 2;
+}
+
+message Address {
+  string line1 = 1;
+  string line2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+message ErrorDetail {
+  string code = 1;
+  string message = 2;
+  string target = 3;
+  repeated ErrorDetail details = 4;
+}
+
+message ApiResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ErrorDetail errors = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// Minimal definitions for service RPC types (expand as needed based on your requirements)
+message StreamTransactionsRequest {
+  string account_id = 1;  // e.g., filter by account ID
+  // Add optional filters like date range if needed
+}
+
+message TransactionResponse {
+  string transaction_id = 1;
+  string type = 2;  // e.g., "DEPOSIT", "WITHDRAWAL"
+  double amount = 3;
+  string currency = 4;
+  string description = 5;
+  string reference = 6;
+  google.protobuf.Timestamp timestamp = 7;
+  double running_balance = 8;
+  // Optionally replace amount/currency with Money amount = 3; if you want to reuse the Money type
+}
+
+message TransferMoneyRequest {
+  string from_account = 1;
+  string to_account = 2;
+  double amount = 3;
+  string currency = 4;
+  string description = 5;  // Optional
+  // Optionally replace amount/currency with Money amount = 3;
+}
+
+message BatchTransferResponse {
+  bool success = 1;
+  string message = 2;
+  repeated string failed_transfers = 3;  // List of failed transfer IDs if any
+  // Optionally nest ApiResponse for consistency
+}
+
+message TradingOrder {
+  string symbol = 1;  // e.g., stock ticker
+  double price = 2;
+  int32 quantity = 3;
+  string order_type = 4;  // e.g., "BUY", "SELL"
+}
+
+message TradingExecution {
+  string order_id = 1;
+  string status = 2;  // e.g., "FILLED", "PARTIAL", "CANCELLED"
+  double executed_price = 3;
+  int32 executed_quantity = 4;
+  google.protobuf.Timestamp execution_time = 5;
+}
+
+// Enhanced account service with streaming
+service EnhancedAccountService {
+  // Server streaming for real-time transactions
+  // rpc StreamTransactions (StreamTransactionsRequest) returns (stream TransactionResponse);
+
+  // // Client streaming for batch operations
+  // rpc BatchTransfer (stream TransferMoneyRequest) returns (BatchTransferResponse);
+
+  // // Bidirectional streaming for real-time trading
+  // rpc LiveTrading (stream TradingOrder) returns (stream TradingExecution);
+}
