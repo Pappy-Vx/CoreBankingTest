@@ -25,15 +25,17 @@ public class CustomersController : ControllerBase
         _logger = logger;
     }
 
+
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<List<CustomerDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<CustomerDto>>>> GetCustomers()
     {
         var query = new GetCustomersQuery();
         var result = await _mediator.Send(query);
-
         return Ok(ApiResponse<List<CustomerDto>>.CreateSuccess(result.Data!));
     }
+
+
 
     [HttpGet("{customerId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<CustomerDetailsDto>), StatusCodes.Status200OK)]
@@ -62,7 +64,8 @@ public class CustomersController : ControllerBase
 
         return CreatedAtAction(
             nameof(GetCustomer),
-             new { customerId = result.Data },
+            new { customerId = result.Data },
             ApiResponse<Guid>.CreateSuccess(result.Data!));
     }
+
 }

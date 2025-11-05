@@ -9,6 +9,8 @@ namespace CoreBanking.Core.Entities
         public string LastName { get; private set; }
         public string Email { get; private set; }
         public string PhoneNumber { get; private set; }
+        public string Address { get; private set; }
+        public DateTime DateOfBirth { get; private set; }
         public DateTime DateCreated { get; private set; }
         public bool IsActive { get; private set; }
         public bool IsDeleted { get; private set; }
@@ -21,17 +23,23 @@ namespace CoreBanking.Core.Entities
 
         private Customer() { } // EF Core needs this
 
-        public Customer(string firstName, string lastName, string email, string phoneNumber)
+        public Customer(string firstName, string lastName, string email, string phoneNumber, string address, DateTime dateOfBirth)
         {
             CustomerId = CustomerId.Create();
             FirstName = firstName ?? throw new ArgumentNullException(nameof(firstName));
             LastName = lastName ?? throw new ArgumentNullException(nameof(lastName));
             Email = email ?? throw new ArgumentNullException(nameof(email));
             PhoneNumber = phoneNumber ?? throw new ArgumentNullException(nameof(phoneNumber));
+            Address = address ?? throw new ArgumentNullException(nameof(address));
             DateCreated = DateTime.UtcNow;
             IsActive = true;
+            DateOfBirth = dateOfBirth;
         }
 
+        public static Customer Create(string firstName, string lastName, string email, string phoneNumber, string address, DateTime dateofbirth)
+        {
+            return new Customer(firstName, lastName, email, phoneNumber, address, dateofbirth);
+        }
         // Business methods
         public void UpdateContactInfo(string email, string phoneNumber)
         {
@@ -50,10 +58,12 @@ namespace CoreBanking.Core.Entities
             IsActive = false;
         }
 
-        internal void AddAccount(Account account)
+        public void AddAccount(Account account)
         {
             _accounts.Add(account);
         }
+
+
         
         public void SoftDelete(string deletedBy)
         {

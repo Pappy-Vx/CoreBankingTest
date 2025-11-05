@@ -37,7 +37,8 @@ namespace CoreBanking.Infrastructure.Data
                 entity.Property(c => c.LastName).IsRequired().HasMaxLength(100);
                 entity.Property(c => c.Email).IsRequired().HasMaxLength(255);
                 entity.Property(c => c.PhoneNumber).HasMaxLength(20);
-
+                entity.HasIndex(c => c.Email).IsUnique();
+                entity.HasIndex(c => c.PhoneNumber).IsUnique();
                 // Customer has many Accounts
                 entity.HasMany(c => c.Accounts)
                     .WithOne(a => a.Customer)
@@ -84,6 +85,7 @@ namespace CoreBanking.Infrastructure.Data
 
                 // Ensure we don't accidentally load all transactions
                 entity.Navigation(a => a.Transactions).AutoInclude(false);
+                entity.Ignore(a => a.DomainEvents);
             });
 
             // Transaction configuration
@@ -134,6 +136,8 @@ namespace CoreBanking.Infrastructure.Data
                     LastName = "Johnson",
                     Email = "alice.johnson@email.com",
                     PhoneNumber = "555-0101",
+                    Address = "123 Main St, Anytown, USA",
+                    DateOfBirth = new DateTime(1990, 5, 15,0, 0, 0, DateTimeKind.Utc),
                 // 💡 FIXED: Use a static, specific UTC date
                 DateCreated = new DateTime(2025, 10, 1, 10, 0, 0, DateTimeKind.Utc),
                 IsActive = true,

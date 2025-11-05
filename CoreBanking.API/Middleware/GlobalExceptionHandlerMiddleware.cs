@@ -47,4 +47,5 @@ public class GlobalExceptionHandlerMiddleware
 
         await context.Response.WriteAsJsonAsync(response);
     }
+
 }

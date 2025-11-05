@@ -1,7 +1,9 @@
+﻿using CoreBanking.API.Mapping;
 using CoreBanking.API.Middleware;
 using CoreBanking.Application.Accounts.Commands.CreateAccount;
 using CoreBanking.Application.Common.Behaviors;
 using CoreBanking.Application.Common.Mappings;
+using CoreBanking.Application.Customers.Commands.CreateCustomer;
 using CoreBanking.Core.Interfaces;
 using CoreBanking.Infrastructure.Data;
 using CoreBanking.Infrastructure.Repositories;
@@ -19,48 +21,18 @@ namespace CoreBanking.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddDbContext<BankingDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-            // Register dependencies (DI)
-            builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-            builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-            builder.Services.AddValidatorsFromAssembly(typeof(CreateAccountCommandValidator).Assembly);
-            builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-
-            // Add services to the container.
+            // ------------------------------------------------------------
+            // 1️⃣ Add Controllers and Swagger
+            // ------------------------------------------------------------
             builder.Services.AddControllers();
-
-            // Add MediatR with behaviours
-            builder.Services.AddMediatR(cfg =>
-            {
-                // Note: Registering one command is enough per Layer�MediatR scans the entire Application assembly (all Commands & Queries).
-                cfg.RegisterServicesFromAssembly(typeof(CreateAccountCommand).Assembly);
-
-                cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-                cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
-
-                cfg.Lifetime = ServiceLifetime.Scoped;
-            });
-
-            // Add AutoMapper
-            builder.Services.AddAutoMapper(cfg => { }, typeof(AccountProfile).Assembly);
-
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-
-            // Enriched swaggerGen with XML comments and authentication
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "CoreBanking API",
                     Version = "v1",
-                    Description = "A modern banking API built with Clean Architecture, DDD and CQRS",
+                    Description = "A modern banking API built with Clean Architecture and CQRS",
                     Contact = new OpenApiContact
                     {
                         Name = "CoreBanking Team",
@@ -68,15 +40,16 @@ namespace CoreBanking.API
                     }
                 });
 
-                // Include XML comments
+                // Include XML comments for better documentation
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
+                if (File.Exists(xmlPath))
+                    c.IncludeXmlComments(xmlPath);
 
-                // Add authentication support in Swagger
+                // JWT Bearer Authentication in Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme.",
+                    Description = "JWT Authorization header using the Bearer scheme (Example: 'Bearer eyJhbGci...')",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,
@@ -84,32 +57,79 @@ namespace CoreBanking.API
                 });
             });
 
+            // ------------------------------------------------------------
+            // 2️⃣ Configure Database Context
+            // ------------------------------------------------------------
+            builder.Services.AddDbContext<BankingDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // ------------------------------------------------------------
+            // 3️⃣ Register Repositories and Unit of Work
+            // ------------------------------------------------------------
+            builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+            builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            // ------------------------------------------------------------
+            // 4️⃣ Configure AutoMapper (Profiles from multiple assemblies)
+            // ------------------------------------------------------------
+            builder.Services.AddAutoMapper(cfg => { },
+            typeof(AccountProfile).Assembly,
+            typeof(CustomerProfile).Assembly,
+            typeof(RequestToCommandProfile).Assembly);
+
+
+            // ------------------------------------------------------------
+            // 5️⃣ Register FluentValidation
+            // ------------------------------------------------------------
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerCommandValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateAccountCommandValidator>();
+
+            // ------------------------------------------------------------
+            // 6️⃣ Register MediatR + Pipeline Behaviors
+            // ------------------------------------------------------------
+            builder.Services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssemblyContaining<CreateCustomerCommand>();
+                cfg.RegisterServicesFromAssemblyContaining<CreateAccountCommand>();
+
+                // Add custom pipeline behaviors (executed in order)
+                cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+                cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
+            });
+
+            // ------------------------------------------------------------
+            // 7️⃣ Build the application
+            // ------------------------------------------------------------
             var app = builder.Build();
 
-            
-            // Configure the HTTP request pipeline.
+            // ------------------------------------------------------------
+            // 8️⃣ Use global exception middleware
+            // ------------------------------------------------------------
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+            // ------------------------------------------------------------
+            // 9️⃣ Configure Swagger
+            // ------------------------------------------------------------
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger(options => options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi2_0);
-
-                // Enriched Swagger UI
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "CoreBanking API v1");
-                    c.RoutePrefix = "swagger"; // Access at /swagger
+                    c.RoutePrefix = "swagger";
                     c.DocumentTitle = "CoreBanking API Documentation";
                     c.EnableDeepLinking();
                     c.DisplayOperationId();
                 });
             }
 
-            app.UseHttpsRedirection();           
-
-            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
-
+            // ------------------------------------------------------------
+            // 🔟 HTTP Request Pipeline
+            // ------------------------------------------------------------
+            app.UseHttpsRedirection();
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();

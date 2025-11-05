@@ -40,6 +40,18 @@ namespace CoreBanking.Infrastructure.Repositories
             await Task.CompletedTask;
         }
 
+        public async Task<Customer?> GetByEmailAsync(string email)
+        {
+            return await _context.Customers
+                .FirstOrDefaultAsync(c => c.Email == email);
+        }
+
+        public async Task<Customer?> GetByPhoneNumberAsync(string phoneNumber)
+        {
+            return await _context.Customers.FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber);
+
+        }
+
         public async Task<bool> ExistsAsync(CustomerId customerId)
         {
             return await _context.Customers

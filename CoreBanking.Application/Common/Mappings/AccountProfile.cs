@@ -21,7 +21,7 @@ public class AccountProfile : Profile
             .ForMember(dest => dest.CustomerName,
                 opt => opt.MapFrom(src => $"{src.Customer.FirstName} {src.Customer.LastName}"));
 
-        // Command to Domain Entity mappings (for complex scenarios)
+
         CreateMap<CreateAccountCommand, Account>()
             .ConstructUsing(src => Account.Create(
                 src.CustomerId,
@@ -38,12 +38,12 @@ public class AccountProfile : Profile
             .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount.Amount))
             .ForMember(dest => dest.Currency, opt => opt.MapFrom(src => src.Amount.Currency));
 
-        // Conditional mapping for different account types
         CreateMap<Account, AccountSummaryDto>()
-            .ForMember(dest => dest.DisplayName,
-                opt => opt.MapFrom((src, dest) =>
-                    src.AccountType == AccountType.Savings
-                        ? $"{src.AccountNumber.Value} - Savings"
-                        : $"{src.AccountNumber.Value} - Current"));
+              .ForMember(dest => dest.DisplayName,
+      opt => opt.MapFrom((src, dest) =>
+          src.AccountType == AccountType.Savings
+              ? $"{src.AccountNumber.Value} - Savings"
+              : $"{src.AccountNumber.Value} - Current"));
     }
+
 }
