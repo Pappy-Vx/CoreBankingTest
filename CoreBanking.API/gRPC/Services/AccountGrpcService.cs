@@ -28,100 +28,67 @@ namespace CoreBanking.API.gRPC.Services
         {
             _logger.LogInformation("gRPC GetAccount called for {AccountNumber}", request.AccountNumber);
 
-            var query = new GetAccountDetailsQuery
+            // Validate input
+            if (string.IsNullOrWhiteSpace(request.AccountNumber))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Account number is required"));
+
+            try
             {
-                AccountNumber = AccountNumber.Create(request.AccountNumber)
-            };
+                var accountNumber = AccountNumber.Create(request.AccountNumber);
+                var query = new GetAccountDetailsQuery { AccountNumber = accountNumber };
+                var result = await _mediator.Send(query);
 
-            var result = await _mediator.Send(query);
+                if (!result.IsSuccess)
+                
+                    throw new RpcException(new Status(StatusCode.NotFound,
+                        string.Join("; ", result.Errors)));
+                return _mapper.Map<AccountResponse>(result.Data!);
 
-            if (!result.IsSuccess)
-                throw new RpcException(new Status(StatusCode.NotFound, string.Join(", ", result.Errors)));
 
-            return _mapper.Map<AccountResponse>(result.Data!);
+            }
+            catch (Exception ex) when (ex is not RpcException)
+            {
+                _logger.LogError(ex, "Error retrieving account {AccountNumber}", request.AccountNumber);
+                throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
+            }
         }
 
         public override async Task<CreateAccountResponse> CreateAccount(CreateAccountRequest request,
             ServerCallContext context)
         {
+            _logger.LogInformation("gRPC CreateAccount called for customer {CustomerId}", request.CustomerId);
+
             if (!Guid.TryParse(request.CustomerId, out var customerGuid))
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid customer ID format"));
 
-            var command = new CreateAccountCommand
+            try
             {
-                CustomerId = CustomerId.Create(customerGuid),
-                AccountType = request.AccountType,
-                InitialDeposit = (decimal)request.InitialDeposit,
-                Currency = request.Currency
-            };
+                var command = new CreateAccountCommand
+                {
+                    CustomerId = CustomerId.Create(customerGuid),
+                    AccountType = request.AccountType,
+                    InitialDeposit = (decimal)request.InitialDeposit,
+                    Currency = request.Currency
+                };
 
-            var result = await _mediator.Send(command);
+                var result = await _mediator.Send(command);
 
-            if (!result.IsSuccess)
-                throw new RpcException(new Status(StatusCode.InvalidArgument, string.Join(", ", result.Errors)));
+                if (!result.IsSuccess)
 
-            return new CreateAccountResponse
-            {
-                AccountId = result.Data!.ToString(),
-                AccountNumber = "TEMP", // Would come from the created account
-                Message = "Account created successfully"
-            };
-        }
+                    throw new RpcException(new Status(StatusCode.InvalidArgument,
+                        string.Join(",", result.Errors)));
 
-        public override async Task<TransferMoneyResponse> TransferMoney(TransferMoneyRequest request,
-            ServerCallContext context)
-        {
-            var command = new TransferMoneyCommand
-            {
-                SourceAccountNumber = AccountNumber.Create(request.SourceAccountNumber),
-                DestinationAccountNumber = AccountNumber.Create(request.DestinationAccountNumber),
-                Amount = new Money((decimal)request.Amount, request.Currency),
-                Reference = request.Reference,
-                Description = request.Description
-            };
-
-            var result = await _mediator.Send(command);
-
-            if (!result.IsSuccess)
-            {
-                var status = result.Errors.Any(e => e.Contains("insufficient", StringComparison.OrdinalIgnoreCase))
-                    ? StatusCode.FailedPrecondition
-                    : StatusCode.InvalidArgument;
-
-                throw new RpcException(new Status(status, string.Join(", ", result.Errors)));
+                return new CreateAccountResponse
+                {
+                    AccountId = result.Data!.ToString(),
+                    AccountNumber = "TEMP",
+                    Message = "Account Created successfully"
+                };
             }
-
-            return new TransferMoneyResponse
+            catch (Exception ex) when (ex is not RpcException)
             {
-                Success = true,
-                Message = "Transfer completed successfully",
-                TransferDate = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow)
-            };
-        }
-
-        public override async Task GetTransactionHistory(TransactionHistoryRequest request,
-            IServerStreamWriter<TransactionResponse> responseStream, ServerCallContext context)
-        {
-            var query = new GetTransactionHistoryQuery
-            {
-                AccountNumber = AccountNumber.Create(request.AccountNumber),
-                StartDate = request.StartDate?.ToDateTime(),
-                EndDate = request.EndDate?.ToDateTime(),
-                PageSize = request.PageSize
-            };
-
-            var result = await _mediator.Send(query);
-
-            if (!result.IsSuccess)
-                throw new RpcException(new Status(StatusCode.NotFound, string.Join(", ", result.Errors)));
-
-            foreach (var transaction in result.Data!.Transactions)
-            {
-                if (context.CancellationToken.IsCancellationRequested)
-                    break;
-
-                await responseStream.WriteAsync(_mapper.Map<TransactionResponse>(transaction));
-                await Task.Delay(100); // Simulate processing time
+                _logger.LogError(ex, "Error creating account for customer {CustomerId}", request.CustomerId);
+                throw new RpcException(new Status(StatusCode.Internal, "Internal server error"));
             }
         }
     }
