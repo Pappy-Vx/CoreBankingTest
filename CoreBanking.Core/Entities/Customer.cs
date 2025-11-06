@@ -9,6 +9,10 @@ namespace CoreBanking.Core.Entities
         public string LastName { get; private set; }
         public string Email { get; private set; }
         public string PhoneNumber { get; private set; }
+        public string Address { get; private set; }
+        public string BVN { get; private set; }
+        public int CreditScore { get; private set; }
+        public DateTime DateOfBirth { get; private set; }
         public DateTime DateCreated { get; private set; }
         public bool IsActive { get; private set; }
         public bool IsDeleted { get; private set; }
@@ -21,7 +25,7 @@ namespace CoreBanking.Core.Entities
 
         private Customer() { } // EF Core needs this
 
-        public Customer(string firstName, string lastName, string email, string phoneNumber)
+        public Customer(string firstName, string lastName, string email, string phoneNumber, DateTime dateOfBirth, string bVN, int creditScore)
         {
             CustomerId = CustomerId.Create();
             FirstName = firstName ?? throw new ArgumentNullException(nameof(firstName));
@@ -30,6 +34,10 @@ namespace CoreBanking.Core.Entities
             PhoneNumber = phoneNumber ?? throw new ArgumentNullException(nameof(phoneNumber));
             DateCreated = DateTime.UtcNow;
             IsActive = true;
+            BVN = bVN;
+            CreditScore = creditScore;
+            DateOfBirth = dateOfBirth;
+            //Address = address;
         }
 
         // Business methods
@@ -49,6 +57,20 @@ namespace CoreBanking.Core.Entities
 
             IsActive = false;
         }
+
+        //public static Customer Create(string firstName, string lastName, string email, string phoneNumber, string address, DateTime dateOfBirth, int creditScore,string bVN)
+        //{
+        //    return new Customer(
+        //        firstName: firstName,
+        //        lastName: lastName,
+        //        email: email,
+        //        phoneNumber: phoneNumber,
+        //        address: address,
+        //        dateOfBirth: dateOfBirth,
+        //        creditScore: creditScore,
+        //        bVN: bVN
+        //    );
+        //}
 
         internal void AddAccount(Account account)
         {

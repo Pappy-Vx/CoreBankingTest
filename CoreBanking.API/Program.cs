@@ -1,17 +1,23 @@
+using CoreBanking.API.Extensions;
 using CoreBanking.API.gRPC.Interceptors;
 using CoreBanking.API.gRPC.Mappings;
 using CoreBanking.API.gRPC.Services;
 using CoreBanking.API.Hubs;
 using CoreBanking.API.Hubs.EventHandlers;
+using CoreBanking.API.Hubs.Management;
 using CoreBanking.API.Middleware;
+using CoreBanking.API.Services;
 using CoreBanking.Application.Accounts.Commands.CreateAccount;
 using CoreBanking.Application.Accounts.EventHandlers;
 using CoreBanking.Application.Common.Behaviors;
 using CoreBanking.Application.Common.Interfaces;
 using CoreBanking.Application.Common.Mappings;
+using CoreBanking.Application.External.HttpClients;
+using CoreBanking.Application.External.Interfaces;
 using CoreBanking.Core.Events;
 using CoreBanking.Core.Interfaces;
 using CoreBanking.Infrastructure.Data;
+using CoreBanking.Infrastructure.External.Resilience;
 using CoreBanking.Infrastructure.Repositories;
 using CoreBanking.Infrastructure.Services;
 using FluentValidation;
@@ -19,6 +25,8 @@ using MediatR;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Polly;
+using Polly.Extensions.Http;
 using System.Reflection;
 
 namespace CoreBanking.API
@@ -106,6 +114,48 @@ namespace CoreBanking.API
                     o.Protocols = HttpProtocols.Http2;
                 });
             });
+            // Add SignalR services
+            builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+                options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+                options.MaximumReceiveMessageSize = 64 * 1024; // 64KB
+            })
+            .AddMessagePackProtocol();
+
+            // Add connection state management
+            builder.Services.AddSingleton<ConnectionStateService>();
+
+            // Add hosted services
+            builder.Services.AddHostedService<TransactionBroadcastService>();
+
+            // Add external HTTP clients with resilience
+            builder.Services.AddExternalHttpClients(builder.Configuration);
+
+            // Add resilience services
+            builder.Services.AddSingleton<IResilientHttpClientService, ResilientHttpClientService>();
+
+            // Register Polly policies
+            builder.Services.AddSingleton(HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(msg => !msg.IsSuccessStatusCode)
+                .WaitAndRetryAsync(
+                    retryCount: 3,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    onRetry: (outcome, timespan, retryCount, context) =>
+                    {
+                        var logger = ContextExtensions.GetLogger(context);
+                        logger?.LogWarning("Retry {RetryCount} after {Delay}ms",
+                            retryCount, timespan.TotalMilliseconds);
+                    }));
+
+            builder.Services.AddHttpClient<ICreditScoringServiceClient, CreditScoringServiceClient>(client =>
+            {
+                client.BaseAddress = new Uri(builder.Configuration["CreditScoringApi:BaseUrl"] ?? "https://api.example.com");
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            });
+
 
             var app = builder.Build();
 

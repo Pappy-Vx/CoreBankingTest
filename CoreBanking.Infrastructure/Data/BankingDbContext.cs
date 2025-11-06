@@ -7,6 +7,7 @@ using CoreBanking.Core.ValueObjects;
 using CoreBanking.Infrastructure.Persistence.Configurations;
 using CoreBanking.Infrastructure.Persistence.Outbox;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Sockets;
 using System.Text.Json;
 
 namespace CoreBanking.Infrastructure.Data
@@ -47,6 +48,8 @@ namespace CoreBanking.Infrastructure.Data
                 entity.Property(c => c.LastName).IsRequired().HasMaxLength(100);
                 entity.Property(c => c.Email).IsRequired().HasMaxLength(255);
                 entity.Property(c => c.PhoneNumber).HasMaxLength(20);
+                entity.HasIndex(c => c.Email).IsUnique();
+                entity.HasIndex(c => c.PhoneNumber).IsUnique();
 
                 // Customer has many Accounts
                 entity.HasMany(c => c.Accounts)
@@ -144,12 +147,17 @@ namespace CoreBanking.Infrastructure.Data
                     LastName = "Johnson",
                     Email = "alice.johnson@email.com",
                     PhoneNumber = "555-0101",
+                    Address = "123 Main St, Lagos, Nigeria",
                 // 💡 FIXED: Use a static, specific UTC date
                 DateCreated = new DateTime(2025, 10, 1, 10, 0, 0, DateTimeKind.Utc),
+                DateOfBirth = new DateTime(1995, 5, 15, 0, 0, 0, DateTimeKind.Utc),
+                    BVN = "20000000000",
+                    CreditScore = 40,
                 IsActive = true,
                     IsDeleted = false
                 }
             );
+            
 
             modelBuilder.Entity<Account>().HasData(new {
                     AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
