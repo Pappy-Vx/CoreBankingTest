@@ -1,5 +1,6 @@
 ﻿using CoreBanking.Application.Common.Interfaces;
 using CoreBanking.Application.Common.Models;
+using CoreBanking.Core.Events;
 using CoreBanking.Core.Interfaces;
 using CoreBanking.Core.ValueObjects;
 using MediatR;
@@ -19,14 +20,17 @@ public class TransferMoneyCommandHandler : IRequestHandler<TransferMoneyCommand,
     private readonly IAccountRepository _accountRepository;
     private readonly ITransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IDomainEventDispatcher _domainEventDispatcher;
 
     public TransferMoneyCommandHandler(
         IAccountRepository accountRepository,
         ITransactionRepository transactionRepository,
+        IDomainEventDispatcher domainEventDispatcher,
         IUnitOfWork unitOfWork)
     {
         _accountRepository = accountRepository;
         _transactionRepository = transactionRepository;
+        _domainEventDispatcher = domainEventDispatcher;
         _unitOfWork = unitOfWork;
     }
 
@@ -43,16 +47,31 @@ public class TransferMoneyCommandHandler : IRequestHandler<TransferMoneyCommand,
             if (destAccount == null)
                 return Result.Failure("Destination account not found");
 
-            // Execute transfer using domain logic - this will now throw exceptions
-            sourceAccount.Transfer(
-                amount: request.Amount,
+            // Execute transfer and capture the returned transaction
+            var transferResult = sourceAccount.Transfer(
+                transferAmount: request.Amount,
                 destination: destAccount,
                 reference: request.Reference,
-                description: request.Description
+                transferDescription: request.Description
             );
+
+            if (!transferResult.IsSuccess)
+                return Result.Failure("Transfer Not Successful"); // Return the failure from domain
+
+            var transaction = transferResult.Value; // Get the created transaction
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // After successful transfer, publish the event
+            var moneyTransferredEvent = new MoneyTransferedEvent(
+                transaction.TransactionId, // Now transaction is defined
+                sourceAccount.AccountNumber, // Use AccountNumber instead of string
+                destAccount.AccountNumber,   // Use AccountNumber instead of string
+                request.Amount,
+                request.Reference);
+
+            await _domainEventDispatcher.DispatchAsync(moneyTransferredEvent, cancellationToken);
 
             return Result.Success();
         }

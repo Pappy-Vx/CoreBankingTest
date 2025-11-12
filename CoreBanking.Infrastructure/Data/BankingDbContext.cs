@@ -141,35 +141,66 @@ namespace CoreBanking.Infrastructure.Data
             });
 
             // Seed the DB
-            modelBuilder.Entity<Customer>().HasData(new {
-                    CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
-                    FirstName = "Alice",
-                    LastName = "Johnson",
-                    Email = "alice.johnson@email.com",
-                    PhoneNumber = "555-0101",
-                    Address = "123 Main St, Lagos, Nigeria",
-                // 💡 FIXED: Use a static, specific UTC date
-                DateCreated = new DateTime(2025, 10, 1, 10, 0, 0, DateTimeKind.Utc),
-                DateOfBirth = new DateTime(1995, 5, 15, 0, 0, 0, DateTimeKind.Utc),
-                    BVN = "20000000000",
-                    CreditScore = 40,
-                IsActive = true,
-                    IsDeleted = false
-                }
-            );
-            
+            //modelBuilder.Entity<Customer>().HasData(new {
+            //        CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
+            //        FirstName = "Alice",
+            //        LastName = "Johnson",
+            //        Email = "alice.johnson@email.com",
+            //        PhoneNumber = "555-0101",
+            //        Address = "123 Main St, Lagos, Nigeria",
+            //    // 💡 FIXED: Use a static, specific UTC date
+            //    DateCreated = new DateTime(2025, 10, 1, 10, 0, 0, DateTimeKind.Utc),
+            //    DateOfBirth = new DateTime(1995, 5, 15, 0, 0, 0, DateTimeKind.Utc),
+            //        BVN = "20000000000",
+            //        CreditScore = 40,
+            //    IsActive = true,
+            //        IsDeleted = false
+            //    }
+            //);
 
-            modelBuilder.Entity<Account>().HasData(new {
-                    AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
-                    AccountNumber = AccountNumber.Create("1234567890"),
-                    AccountType = AccountType.Checking, // EF handles enum conversion
-                    CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
-                    Currency = "NGN",
-                DateOpened = new DateTime(2025, 10, 11, 10, 0, 0, DateTimeKind.Utc),
+            modelBuilder.Entity<Customer>().HasData(new
+            {
+                CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
+                FirstName = "Alice",
+                LastName = "Johnson",
+                Email = "alice.johnson@email.com",
+                Address = "123 Main St, Lagos, Nigeria",
+                PhoneNumber = "555-0101",
+                BVN = "20000000009",
+                CreditScore = 40,
+                // Use static, fixed dates instead of DateTime.UtcNow.AddX
+                DateOfBirth = new DateTime(1995, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                DateCreated = new DateTime(2024, 10, 1, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true,
-                    IsDeleted = false            
-                }
-            );
+                IsDeleted = false
+            });
+
+
+            //modelBuilder.Entity<Account>().HasData(new {
+            //        AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
+            //        AccountNumber = AccountNumber.Create("1234567890"),
+            //        AccountType = AccountType.Checking, // EF handles enum conversion
+            //        CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
+            //        Currency = "NGN",
+            //    DateOpened = new DateTime(2025, 10, 11, 10, 0, 0, DateTimeKind.Utc),
+            //    IsActive = true,
+            //        IsDeleted = false            
+            //    }
+            //);
+
+            modelBuilder.Entity<Account>().HasData(new
+            {
+                AccountId = AccountId.Create(Guid.Parse("c3d4e5f6-3456-7890-cde1-345678901cde")),
+                AccountNumber = AccountNumber.Create("1234567890"),
+                AccountType = AccountType.Checking,
+                CustomerId = CustomerId.Create(Guid.Parse("a1b2c3d4-1234-5678-9abc-123456789abc")),
+                Currency = "NGN",
+                // Also use a static date for DateOpened
+                DateOpened = new DateTime(2024, 10, 10, 0, 0, 0, DateTimeKind.Utc),
+                IsActive = true,
+                IsDeleted = false
+            });
+
 
             // Then configure the owned types separately
             modelBuilder.Entity<Account>().OwnsOne(a => a.Balance).HasData(
