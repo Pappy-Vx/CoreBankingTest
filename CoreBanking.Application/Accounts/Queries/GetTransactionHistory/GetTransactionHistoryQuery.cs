@@ -35,7 +35,7 @@ public class GetTransactionHistoryQueryHandler : IRequestHandler<GetTransactionH
             return Result<TransactionHistoryDto>.Failure("Account not found");
 
         // Start with IQueryable or IEnumerable from repository
-        var transactionsQuery = (await _transactionRepository.GetByAccountIdAsync(account.AccountId, cancellationToken))
+        var transactionsQuery = (await _transactionRepository.GetTransactionsByAccountIdAsync(account.AccountId, cancellationToken))
             .AsQueryable(); // Or keep as IEnumerable
 
         // Apply date filtering

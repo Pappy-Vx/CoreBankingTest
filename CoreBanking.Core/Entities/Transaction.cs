@@ -12,6 +12,9 @@ namespace CoreBanking.Core.Entities
         public Money Amount { get; private set; }
         public string Description { get; private set; }
         public DateTime Timestamp { get; private set; }
+
+        public bool IsArchived { get; private set; } = false;
+        public DateTime TransactionDate { get; private set; }
         public string Reference { get; private set; }
         public bool IsDeleted { get; private set; }
         public DateTime? DeletedAt { get; private set; }
@@ -35,6 +38,20 @@ namespace CoreBanking.Core.Entities
         private string GenerateReference()
         {
             return $"{Timestamp:yyyyMMddHHmmss}-{TransactionId.ToString().Substring(0, 8)}";
+        }
+
+        // Method for maintenance
+        public void MarkAsArchived()
+        {
+            IsArchived = true;
+        }
+
+        public static Transaction CreateInterestCredit(AccountId accountId, decimal interestAmount, string description)
+        {
+            if (interestAmount <= 0)
+                throw new ArgumentException("Interest amount must be positive.", nameof(interestAmount));
+            var amount = new Money(interestAmount);
+            return new Transaction(accountId, TransactionType.Interest, amount, description, account: null);
         }
     }
 }

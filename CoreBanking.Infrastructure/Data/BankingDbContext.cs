@@ -172,7 +172,8 @@ namespace CoreBanking.Infrastructure.Data
                 DateOfBirth = new DateTime(1995, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 DateCreated = new DateTime(2024, 10, 1, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true,
-                IsDeleted = false
+                IsDeleted = false,
+                
             });
 
 
@@ -198,7 +199,11 @@ namespace CoreBanking.Infrastructure.Data
                 // Also use a static date for DateOpened
                 DateOpened = new DateTime(2024, 10, 10, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true,
-                IsDeleted = false
+                IsDeleted = false,
+                IsArchived = false,
+                IsInterestBearing = true,
+                LastActivityDate = new DateTime(2025, 11, 11, 0,0,0, DateTimeKind.Utc),
+                Status = "Active"
             });
 
 
