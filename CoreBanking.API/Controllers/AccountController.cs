@@ -1,15 +1,15 @@
 ﻿using AutoMapper;
-using CoreBankingTest.API.Models;
-using CoreBankingTest.API.Models.Requests;
-using CoreBankingTest.Application.Accounts.Commands.CreateAccount;
-using CoreBankingTest.Application.Accounts.Commands.TransferMoney;
-using CoreBankingTest.Application.Accounts.Queries.GetAccountDetails;
-using CoreBankingTest.Application.Accounts.Queries.GetTransactionHistory;
-using CoreBankingTest.Core.ValueObjects;
+using CoreBanking.API.Models;
+using CoreBanking.API.Models.Requests;
+using CoreBanking.Application.Accounts.Commands.CreateAccount;
+using CoreBanking.Application.Accounts.Commands.TransferMoney;
+using CoreBanking.Application.Accounts.Queries.GetAccountDetails;
+using CoreBanking.Application.Accounts.Queries.GetTransactionHistory;
+using CoreBanking.Core.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CoreBankingTest.API.Controllers;
+namespace CoreBanking.API.Controllers;
 
 /// <summary>
 /// Banking accounts management API
@@ -84,8 +84,8 @@ public class AccountsController : ControllerBase
     /// <summary>
     /// Transfer money between accounts
     /// </summary>
-    /// <param name="accountNumber">Source account number</param>
-    /// <param name="request">Transfer details</param>
+    /// <param name="sourceaccountNumber">Source account number</param>
+    /// <param name="destinationaccountNumber">Transfer details</param>
     /// <returns>Transfer operation result</returns>
     /// <response code="200">Transfer completed successfully</response>
     /// <response code="400">Invalid transfer request</response>
@@ -95,15 +95,15 @@ public class AccountsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ApiResponse>> TransferMoney(
-        string accountNumber,
+        string sourceaccountNumber, string destinationaccountNumber,
         [FromBody] TransferMoneyRequest request)
     {
-        _logger.LogInformation("Processing transfer from {AccountNumber}", accountNumber);
+        _logger.LogInformation("Processing transfer from {sourceaccountNumber}", sourceaccountNumber);
 
         var command = new TransferMoneyCommand
         {
-            SourceAccountNumber = AccountNumber.Create(accountNumber),
-            DestinationAccountNumber = AccountNumber.Create(request.DestinationAccountNumber),
+            SourceAccountNumber = AccountNumber.Create(sourceaccountNumber),
+            DestinationAccountNumber = AccountNumber.Create(destinationaccountNumber),
             Amount = new Money(request.Amount, request.Currency),
             Reference = request.Reference,
             Description = request.Description
